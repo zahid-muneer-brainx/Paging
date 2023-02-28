@@ -45,6 +45,15 @@ class MainActivity : AppCompatActivity() {
                 myAdapter.submitData(lifecycle, it)
             }
         }
+        binding.refresh.setOnRefreshListener {
+            binding.refresh.isRefreshing=false
+            viewModel.responseData.observe(this) {
+                if(it!=null) {
+                    binding.progress.visibility=View.GONE
+                    myAdapter.submitData(lifecycle, it)
+                }
+            }
+        }
 
     }
 
