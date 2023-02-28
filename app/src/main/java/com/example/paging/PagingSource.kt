@@ -2,8 +2,9 @@ package com.example.paging
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import androidx.room.util.query
 
-class MyPagingSource(val myApiClient: MyApiClient) : PagingSource<Int, Result>() {
+class MyPagingSource(val myApiClient: MyApiClient,val query:String) : PagingSource<Int, Result>() {
     override fun getRefreshKey(state: PagingState<Int, Result>): Int? {
         return state.anchorPosition?.let { anchorPosition ->
             val anchorPage = state.closestPageToPosition(anchorPosition)
@@ -14,7 +15,7 @@ class MyPagingSource(val myApiClient: MyApiClient) : PagingSource<Int, Result>()
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Result> {
         return try {
             val position = params.key ?: 1
-            val response = myApiClient.getData(position)
+            val response = myApiClient.searchData(query)
 
             return LoadResult.Page(
                 data = response.results,
