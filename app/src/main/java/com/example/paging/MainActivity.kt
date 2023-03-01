@@ -3,19 +3,15 @@ package com.example.paging
 import android.app.SearchManager
 import android.content.Context
 import android.os.Bundle
-import com.google.android.material.snackbar.Snackbar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
-import androidx.navigation.ui.setupActionBarWithNavController
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.SearchView
 import androidx.activity.viewModels
-import androidx.core.view.MenuItemCompat
-import androidx.lifecycle.ViewModel
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.paging.databinding.ActivityMainBinding
 import dagger.hilt.android.AndroidEntryPoint
@@ -47,12 +43,7 @@ class MainActivity : AppCompatActivity() {
         }
         binding.refresh.setOnRefreshListener {
             binding.refresh.isRefreshing=false
-            viewModel.responseData.observe(this) {
-                if(it!=null) {
-                    binding.progress.visibility=View.GONE
-                    myAdapter.submitData(lifecycle, it)
-                }
-            }
+
         }
 
     }
@@ -90,9 +81,9 @@ class MainActivity : AppCompatActivity() {
                                 else
                                 {
                                     binding.progress.visibility=View.VISIBLE
-                                    viewModel.searchDataFromApi(query = it).observe(this@MainActivity){pagingData->
+                                    viewModel.searchDataFromApi(query = it).observe(this@MainActivity){pagingData1->
                                         binding.progress.visibility=View.GONE
-                                        myAdapter.submitData(lifecycle, pagingData)
+                                        myAdapter.submitData(lifecycle, pagingData1)
                                     }
                                 }
 
