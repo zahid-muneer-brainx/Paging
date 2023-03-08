@@ -14,6 +14,7 @@ import retrofit2.HttpException
 class AuthorsRemoteMediator(
     private val apiService: MyApiClient,
     private val authorDatabase: AuthorsDataBase,
+    val query: String = "%%"
 ) : RemoteMediator<Int, Result>() {
     override suspend fun load(
         loadType: LoadType,
@@ -39,15 +40,9 @@ class AuthorsRemoteMediator(
         }
         try {
 
-            val apiResponse = apiService.getData(page = page)
+            val apiResponse =  apiService.getData(page = page,query)
                 val results = apiResponse.results
                 val endOfPaginationReached = results.isEmpty()
-                if (loadType == LoadType.REFRESH) {
-                    CoroutineScope(Dispatchers.IO).launch {
-                        authorDatabase.getRemoteKeysDao().clearRemoteKeys()
-                        authorDatabase.authorDao().clearAllAuthors()
-                    }
-                }
                 val prevKey = if (page > 1) page - 1 else null
                 val nextKey = if (endOfPaginationReached) null else page + 1
                 val remoteKeys = results.map {
@@ -55,7 +50,8 @@ class AuthorsRemoteMediator(
                         authorId = it._id,
                         prevKey = prevKey,
                         currentPage = page,
-                        nextKey = nextKey
+                        nextKey = nextKey,
+                        content = it.content
                     )
                 }
                 CoroutineScope(Dispatchers.IO).launch {
@@ -74,8 +70,8 @@ class AuthorsRemoteMediator(
 
     private suspend fun getRemoteKeyClosestToCurrentPosition(state: PagingState<Int, Result>): RemoteDataKeys? {
         return state.anchorPosition?.let { position ->
-            state.closestItemToPosition(position)?._id?.let { id ->
-                authorDatabase.getRemoteKeysDao().getRemoteKeyByAuthorID(id)
+            state.closestItemToPosition(position)?.content?.let { id ->
+                authorDatabase.getRemoteKeysDao().getRemoteKeyByContent(id)
             }
         }
     }
@@ -84,7 +80,7 @@ class AuthorsRemoteMediator(
         return state.pages.firstOrNull {
             it.data.isNotEmpty()
         }?.data?.firstOrNull()?.let { author ->
-            authorDatabase.getRemoteKeysDao().getRemoteKeyByAuthorID(author._id)
+            authorDatabase.getRemoteKeysDao().getRemoteKeyByContent(author.content)
         }
     }
 
@@ -92,7 +88,7 @@ class AuthorsRemoteMediator(
         return state.pages.lastOrNull {
             it.data.isNotEmpty()
         }?.data?.lastOrNull()?.let { author ->
-            authorDatabase.getRemoteKeysDao().getRemoteKeyByAuthorID(author._id)
+            authorDatabase.getRemoteKeysDao().getRemoteKeyByContent(author.content)
         }
     }
 }

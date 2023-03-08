@@ -13,6 +13,9 @@ interface RemoteKeysDao {
     @Query("Select * From remote_key Where author_id = :id")
     suspend fun getRemoteKeyByAuthorID(id: String): RemoteDataKeys?
 
+    @Query("Select * From remote_key Where content = :id")
+    suspend fun getRemoteKeyByContent(id: String): RemoteDataKeys?
+
     @Query("Delete From remote_key")
     suspend fun clearRemoteKeys()
 

@@ -13,12 +13,16 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.SearchView
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.core.view.MenuItemCompat
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.paging.databinding.ActivityMainBinding
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -39,12 +43,33 @@ class MainActivity : AppCompatActivity() {
             layoutManager = LinearLayoutManager(this@MainActivity)
             adapter = myAdapter
         }
-        viewModel.responseData.observe(this) {
-            if(it!=null) {
-                binding.progress.visibility=View.GONE
-                myAdapter.submitData(lifecycle, it)
+        lifecycleScope.launch {
+            viewModel._state.collect {
+                when (it) {
+                    is ViewModelState.idle -> {
+
+                    }
+                    is ViewModelState.loading -> {
+                        binding.progress.visibility = View.VISIBLE
+                    }
+                    is ViewModelState.Authors -> {
+                        binding.progress.visibility = View.GONE
+                        it.author.collect { pagingData ->
+                            myAdapter.submitData(lifecycle, pagingData = pagingData)
+                        }
+                    }
+                    is ViewModelState.Error -> {
+                        Toast.makeText(this@MainActivity, it.error.toString(), Toast.LENGTH_SHORT)
+                            .show()
+                    }
+
+                }
             }
         }
+        lifecycleScope.launchWhenCreated {
+            viewModel.userIntent.send(MainIntent.FetchAuthor("%%"))
+        }
+
 
     }
 
@@ -56,38 +81,18 @@ class MainActivity : AppCompatActivity() {
             setSearchableInfo(searchManager.getSearchableInfo(componentName))
             setOnQueryTextListener(object : SearchView.OnQueryTextListener {
                 override fun onQueryTextSubmit(query: String?): Boolean {
-//                    query?.let {
-//                        if (it.isEmpty()) {
-//                            viewModel.searchData("%%").observe(this@MainActivity) { pagingData ->
-//
-//                                myAdapter.submitData(lifecycle, pagingData)
-//                            }
-//                        }
-//                        viewModel.searchData("%$it%").observe(this@MainActivity) { pagingData ->
-//                            binding.progress.visibility=View.GONE
-//                            myAdapter.submitData(lifecycle, pagingData)
-//                        }
-//                    }
                     return false
                 }
 
                 override fun onQueryTextChange(newText: String?): Boolean {
                     newText?.let {
-
-                            viewModel.searchData("%$it%").observe(this@MainActivity) { pagingData ->
-                                if (pagingData!=null){
-                                    myAdapter.submitData(lifecycle, pagingData)
-                                }
-                                else
-                                {
-                                    binding.progress.visibility=View.VISIBLE
-                                    viewModel.searchDataFromApi(query = it).observe(this@MainActivity){pagingData->
-                                        binding.progress.visibility=View.GONE
-                                        myAdapter.submitData(lifecycle, pagingData)
-                                    }
-                                }
-
+                        lifecycleScope.launch {
+                            viewModel.searchData("%$it%").collect{
+                                myAdapter.submitData(lifecycle,it)
                             }
+                           viewModel.userIntent.send(MainIntent.FetchAuthor("%$it%"))
+                        }
+
                     }
                     return true
                 }
@@ -103,6 +108,7 @@ class MainActivity : AppCompatActivity() {
         // as you specify a parent activity in AndroidManifest.xml.
         return when (item.itemId) {
             R.id.action_settings -> true
+            R.id.search -> true
             else -> super.onOptionsItemSelected(item)
         }
     }
