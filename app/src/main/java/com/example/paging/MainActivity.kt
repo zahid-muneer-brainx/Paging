@@ -44,7 +44,7 @@ class MainActivity : AppCompatActivity() {
             adapter = myAdapter
         }
         lifecycleScope.launch {
-            viewModel._state.collect {
+            viewModel.state.collect {
                 when (it) {
                     is ViewModelState.idle -> {
 
@@ -63,11 +63,12 @@ class MainActivity : AppCompatActivity() {
                             .show()
                     }
 
+                    else -> {}
                 }
             }
         }
         lifecycleScope.launchWhenCreated {
-            viewModel.userIntent.send(MainIntent.FetchAuthor("%%"))
+            viewModel.userIntent.send(MainIntent.FetchAuthor)
         }
 
 
@@ -90,7 +91,7 @@ class MainActivity : AppCompatActivity() {
                             viewModel.searchData("%$it%").collect{
                                 myAdapter.submitData(lifecycle,it)
                             }
-                           viewModel.userIntent.send(MainIntent.FetchAuthor("%$it%"))
+                           viewModel.userIntent.send(MainIntent.FetchAuthor)
                         }
 
                     }

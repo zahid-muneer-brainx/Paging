@@ -12,18 +12,17 @@ class MyRepository @Inject constructor(
     private val authorsDataBase: AuthorsDataBase
 ) {
     @OptIn(ExperimentalPagingApi::class)
-    fun getData(query: String) = Pager(
+    fun getData() = Pager(
         config = PagingConfig(
             pageSize = 20,
             maxSize = 100
         ),
         pagingSourceFactory = {
-            authorsDataBase.authorDao().searchByContent(query)
+            authorsDataBase.authorDao().getAuthors()
         },
         remoteMediator = AuthorsRemoteMediator(
             myApiClient,
-            authorsDataBase,
-            query
+            authorsDataBase
         )
     ).flow
 
@@ -38,8 +37,7 @@ class MyRepository @Inject constructor(
         },
         remoteMediator = AuthorsRemoteMediator(
             myApiClient,
-            authorsDataBase,
-            query
+            authorsDataBase
         )
     ).flow
 

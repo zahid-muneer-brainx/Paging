@@ -8,8 +8,7 @@ interface MyApiClient {
 
     @GET("/quotes")
     suspend fun getData(
-        @Query("page") page: Int,
-        @Query("query") query: String
+        @Query("page") page: Int
     ):DataResponse
 
     @GET("/search/quotes")

@@ -17,7 +17,7 @@ class MyViewModel @Inject constructor(
     private val repository: MyRepository
 ) : ViewModel() {
     val userIntent = Channel<MainIntent>(Channel.UNLIMITED)
-    val _state = MutableStateFlow<ViewModelState>(ViewModelState.idle)
+    private val _state = MutableStateFlow<ViewModelState>(ViewModelState.idle)
     val state: StateFlow<ViewModelState>
         get() = _state
 
@@ -29,7 +29,7 @@ class MyViewModel @Inject constructor(
         viewModelScope.launch {
             userIntent.consumeAsFlow().collect {
                 when (it) {
-                    is MainIntent.FetchAuthor -> getAuthors(MainIntent.FetchAuthor(it.query))
+                    is MainIntent.FetchAuthor -> getAuthors(MainIntent.FetchAuthor)
                     is MainIntent.SearchAuthor -> getAuthors(MainIntent.SearchAuthor(it.query))
                 }
             }
@@ -41,7 +41,7 @@ class MyViewModel @Inject constructor(
             when (action){
                 is MainIntent.FetchAuthor -> {
                     _state.value = try {
-                        ViewModelState.Authors(repository.getData(action.query).cachedIn(viewModelScope))
+                        ViewModelState.Authors(repository.getData().cachedIn(viewModelScope))
                     }
                         catch (e: Exception) {
                             ViewModelState.Error(e.localizedMessage)
