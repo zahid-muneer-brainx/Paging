@@ -10,4 +10,9 @@ interface MyApiClient {
     suspend fun getData(
         @Query("page") page: Int
     ):DataResponse
+
+    @GET("/search/quotes")
+    suspend fun searchData(
+        @Query("query") page: String
+    ):DataResponse
 }
